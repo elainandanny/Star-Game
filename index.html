@@ -78,12 +78,14 @@
           }
         }
       }
-      // Game over
+      // Game over and win condition
       if (round > 8) {
         textSize(20);
         textAlign(CENTER);
         fill(255, 0, 0);
-        text("Game Over!", width / 2, height / 2);
+        let winMessage = checkWinCondition() ? "Game Over! Player 1 Wins!" : "Game Over! Player 2 Wins!";
+        text(winMessage, width / 2, height / 2);
+        document.getElementById('status').innerText = winMessage;
       }
     }
 
@@ -100,6 +102,17 @@
         vertex(sx, sy);
       }
       endShape(CLOSE);
+    }
+
+    function checkWinCondition() {
+      for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 6; j++) {
+          if (board[i][j] === 0) {
+            return true; // At least one empty square, Player 1 wins
+          }
+        }
+      }
+      return false; // No empty squares, Player 2 wins
     }
 
     function mousePressed() {
@@ -150,7 +163,7 @@
       availableDirections = availableDirections.filter(d => d !== dir);
       currentPlayer = 1;
       round++;
-      document.getElementById('status').innerText = round <= 8 ? `Player 1's Turn: Place a star (Round ${round}/8)` : 'Game Over!';
+      document.getElementById('status').innerText = round <= 8 ? `Player 1's Turn: Place a star (Round ${round}/8)` : checkWinCondition() ? 'Game Over! Player 1 Wins!' : 'Game Over! Player 2 Wins!';
       updateControls();
     }
   </script>
