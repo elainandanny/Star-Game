@@ -1,0 +1,23 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v12
+      with:
+        version: latest
+    - name: Build WebAssembly
+      run: |
+        emcc dandelions.c -o dandelions.js -s EXPORTED_FUNCTIONS="['_display', '_options', '_init_memoize', '_free_memoize', '_plant_move', '_blow_move', '_get_score', '_get_initial_game', '_get_turn']" -s EXPORTED_RUNTIME_METHODS="['ccall', 'UTF8ToString', 'getValue']" -O3
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
