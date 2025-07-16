@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>6x6 Star Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      border: 2px solid black;
+    }
+    #controls {
+      margin-top: 10px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    #status {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Player 1's Turn: Place a star</div>
+  <div id="controls"></div>
+  <script>
+    let board = Array(6).fill().map(() => Array(6).fill(0));
+    let currentPlayer = 1;
+    let round = 1;
+    const directions = [
+      {name: "North", dx: 0, dy: -1},
+      {name: "South", dx: 0, dy: 1},
+      {name: "East", dx: 1, dy: 0},
+      {name: "West", dx: -1, dy: 0},
+      {name: "Northeast", dx: 1, dy: -1},
+      {name: "Northwest", dx: -1, dy: -1},
+      {name: "Southeast", dx: 1, dy: 1},
+      {name: "Southwest", dx: -1, dy: 1}
+    ];
+    let availableDirections = [...directions];
+
+    function setup() {
+      createCanvas(300, 300);
+      updateControls();
+    }
+
+    function draw() {
+      background(255);
+      // Draw grid
+      for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 6; j++) {
+          let x = j * 50;
+          let y = i * 50;
+          stroke(0);
+          fill(255);
+          rect(x, y, 50, 50);
+          if (board[i][j] === 1) {
+            // Draw star
+            fill(255, 255, 0);
+            star(x + 25, y + 25, 10, 20, 8);
+          } else if (board[i][j] === 2) {
+            // Draw circle
+            fill(0, 0, 255);
+            circle(x + 25, y + 25, 20);
+          }
+        }
+      }
+      // Game over
+      if (round > 8) {
+        textSize(20);
+        textAlign(CENTER);
+        fill(255, 0, 0);
+        text("Game Over!", width / 2, height / 2);
+      }
+    }
+
+    function star(x, y, radius1, radius2, npoints) {
+      let angle = TWO_PI / npoints;
+      let halfAngle = angle / 2.0;
+      beginShape();
+      for (let a = 0; a < TWO_PI; a += angle) {
+        let sx = x + cos(a) * radius2;
+        let sy = y + sin(a) * radius2;
+        vertex(sx, sy);
+        sx = x + cos(a + halfAngle) * radius1;
+        sy = y + sin(a + halfAngle) * radius1;
+        vertex(sx, sy);
+      }
+      endShape(CLOSE);
+    }
+
+    function mousePressed() {
+      if (round > 8 || currentPlayer !== 1) return;
+      let j = floor(mouseX / 50);
+      let i = floor(mouseY / 50);
+      if (i >= 0 && i < 6 && j >= 0 && j < 6 && board[i][j] === 0) {
+        board[i][j] = 1;
+        currentPlayer = 2;
+        document.getElementById('status').innerText = `Player 2's Turn: Choose a direction (Round ${round}/8)`;
+        updateControls();
+      }
+    }
+
+    function updateControls() {
+      let controls = document.getElementById('controls');
+      controls.innerHTML = '';
+      if (currentPlayer === 2 && round <= 8) {
+        availableDirections.forEach(dir => {
+          let btn = document.createElement('button');
+          btn.innerText = dir.name;
+          btn.onclick = () => applyDirection(dir);
+          controls.appendChild(btn);
+        });
+      } else {
+        controls.innerHTML = '<p>Waiting for Player 1 to place a star...</p>';
+      }
+    }
+
+    function applyDirection(dir) {
+      if (currentPlayer !== 2 || round > 8) return;
+      // For each star, convert all squares in the chosen direction (except the star) to circles
+      for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 6; j++) {
+          if (board[i][j] === 1) {
+            // Trace the direction from (i, j), skipping the star's square
+            let x = j + dir.dx;
+            let y = i + dir.dy;
+            while (x >= 0 && x < 6 && y >= 0 && y < 6) {
+              board[y][x] = 2; // Convert to circle
+              x += dir.dx;
+              y += dir.dy;
+            }
+          }
+        }
+      }
+      // Remove the chosen direction
+      availableDirections = availableDirections.filter(d => d !== dir);
+      currentPlayer = 1;
+      round++;
+      document.getElementById('status').innerText = round <= 8 ? `Player 1's Turn: Place a star (Round ${round}/8)` : 'Game Over!';
+      updateControls();
+    }
+  </script>
+</body>
+</html>
